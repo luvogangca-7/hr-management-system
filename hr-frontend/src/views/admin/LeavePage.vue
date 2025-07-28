@@ -2,39 +2,50 @@
   <div class="page-wrapper">
     <h1>Leave Requests</h1>
     <p>Handle all your employees' leave requests with just a click.</p>
+
     <div class="main-page">
       <input
         v-model="search"
         type="text"
-        placeholder="Search employee by name or reason"
+        placeholder="Search by employee ID or reason"
         class="search-input"
       />
-      <!-- Responsive table for leave requests -->
+
       <div style="overflow-x:auto;">
         <table class="table table-striped-columns table-responsive" v-if="filteredLeaveRequests.length">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Date</th>
+              <th>Employee ID</th>
+              <th>Leave Date</th>
               <th>Reason</th>
               <th>Status</th>
-              <th v-if="isHR">Actions</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(req, idx) in filteredLeaveRequests" :key="idx">
-              <td>{{ req.name }}</td>
-              <td>{{ req.date }}</td>
+            <tr v-for="(req, idx) in filteredLeaveRequests" :key="req.employee_id + '-' + req.leave_date">
+              <td>{{ req.employee_id }}</td>
+              <td>{{ req.leave_date }}</td>
               <td>{{ req.reason }}</td>
-              <td>
-                <span v-if="req.status === 'Pending' || req.status === 'pending'">Pending</span>
-                <span v-else-if="req.status === 'Approved' || req.status === 'approved'" style="color:green">Approved</span>
-                <span v-else style="color:red">Denied</span>
+              <td :style="{ color: req.status === 'Approved' ? 'green' : req.status === 'Denied' ? 'red' : 'black' }">
+                {{ req.status }}
               </td>
-              <td v-if="isHR">
+              <td>
                 <div class="btn-cont">
-                  <button v-if="req.status === 'Pending' || req.status === 'pending'" @click="approve(idx)" class="btn btn-primary mx-2">Approve</button>
-                  <button v-if="req.status === 'Pending' || req.status === 'pending'" @click="deny(idx)" class="btn btn-danger mx-2">Deny</button>
+                  <button
+                    v-if="req.status === 'Pending'"
+                    @click="updateLeaveStatus(req.employee_id, req.leave_date, 'Approved')"
+                    class="btn btn-success mx-2"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    v-if="req.status === 'Pending'"
+                    @click="updateLeaveStatus(req.employee_id, req.leave_date, 'Denied')"
+                    class="btn btn-danger mx-2"
+                  >
+                    Deny
+                  </button>
                 </div>
               </td>
             </tr>
@@ -47,86 +58,64 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   data() {
     return {
-      allLeaveRequests: [], // All leave requests loaded from JSON
-      isHR: true,           // Whether the user is HR (controls action buttons)
-      search: ''            // Search input value
+      allLeaveRequests: [],
+      search: ''
     }
   },
   computed: {
-    // Returns filtered leave requests based on search input
     filteredLeaveRequests() {
-      if (!this.search) return this.allLeaveRequests;
-      const q = this.search.toLowerCase();
-      // Filter by name or reason (case-insensitive)
+      if (!this.search) return this.allLeaveRequests
+      const q = this.search.toLowerCase()
       return this.allLeaveRequests.filter(
         req =>
-          req.name.toLowerCase().includes(q) ||
+          req.employee_id.toString().includes(q) ||
           req.reason.toLowerCase().includes(q)
-      );
-    }
-  },
-  async mounted() {
-    try {
-      // Fetch attendance and leave data from a JSON file
-      const response = await fetch('/hr-data/attendance.json');
-      const attendanceData = await response.json();
-      // Flatten the leave requests for all employees into a single array
-      this.allLeaveRequests = attendanceData.attendanceAndLeave.flatMap(emp =>
-        emp.leaveRequests.map(lr => ({
-          name: emp.name,
-          date: lr.date,
-          reason: lr.reason,
-          status: lr.status
-        }))
-      );
-    } catch (error) {
-      // Log error if fetch fails
-      console.error('Failed to fetch leave data:', error);
+      )
     }
   },
   methods: {
-    // Approve a leave request by index in the filtered list
-    approve(idx) {
-      // Find the request in the filtered list
-      const req = this.filteredLeaveRequests[idx];
-      // Find the real index in the allLeaveRequests array
-      const realIdx = this.allLeaveRequests.findIndex(
-        r =>
-          r.name === req.name &&
-          r.date === req.date &&
-          r.reason === req.reason &&
-          r.status === req.status
-      );
-      // Update the status if found
-      if (realIdx !== -1) this.allLeaveRequests[realIdx].status = 'Approved';
+    async fetchLeaveRequests() {
+      try {
+        const res = await axios.get('http://localhost/hr-management-system/hr-backend/getLeaveRequests.php')
+        this.allLeaveRequests = res.data.leaveRequests || []
+      } catch (error) {
+        console.error('Error fetching leave requests:', error)
+      }
     },
-    // Deny a leave request by index in the filtered list
-    deny(idx) {
-      // Find the request in the filtered list
-      const req = this.filteredLeaveRequests[idx];
-      // Find the real index in the allLeaveRequests array
-      const realIdx = this.allLeaveRequests.findIndex(
-        r =>
-          r.name === req.name &&
-          r.date === req.date &&
-          r.reason === req.reason &&
-          r.status === req.status
-      );
-      // Update the status if found
-      if (realIdx !== -1) this.allLeaveRequests[realIdx].status = 'Denied';
+    async updateLeaveStatus(employee_id, leave_date, status) {
+      try {
+        const res = await axios.post('http://localhost/hr-management-system/hr-backend/updateLeaveStatus.php', {
+          employee_id,
+          leave_date,
+          status
+        })
+
+        if (res.data.success) {
+          // Update status locally
+          const index = this.allLeaveRequests.findIndex(
+            req => req.employee_id === employee_id && req.leave_date === leave_date
+          )
+          if (index !== -1) this.allLeaveRequests[index].status = status
+        } else {
+          alert(res.data.message || 'Failed to update status')
+        }
+      } catch (error) {
+        console.error('Error updating leave status:', error)
+      }
     }
+  },
+  mounted() {
+    this.fetchLeaveRequests()
   }
 }
 </script>
 
 <style scoped>
-.main-page h2 {
-  margin-bottom: 16px;
-}
-
 .search-input {
   display: flex;
   min-width: 200px;
@@ -153,7 +142,7 @@ export default {
     min-width: 200px;
   }
 }
-/* Responsive table: allow horizontal scroll on small screens */
+
 .main-page > div {
   overflow-x: auto;
 }

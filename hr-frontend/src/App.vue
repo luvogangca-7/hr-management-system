@@ -24,7 +24,7 @@
       @click="toggleSidebar"
     >
       <template #after-nav>
-        <button class="butn logout-mobile" @click="showLogoutModal">Logout</button>
+        <button class="butn logout-mobile" @click="showLogoutModal">Logout <i class="bi bi-arrow-bar-right"></i></button>
       </template>
     </navbar-comp>
     <main class="main-content">

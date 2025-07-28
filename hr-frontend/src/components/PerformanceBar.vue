@@ -31,21 +31,21 @@ export default {
           {
             label: 'Punctuality',
             data: this.reviews.map(r => r.punctuality),
-            backgroundColor: this.reviews.map(r => this.getBarColor(r.punctuality)),
+            backgroundColor: '#af2727',
             borderColor: '#333',
             borderWidth: 1
           },
           {
             label: 'Task Completion',
             data: this.reviews.map(r => r.taskCompletion),
-            backgroundColor: this.reviews.map(r => this.getBarColor(r.taskCompletion)),
+            backgroundColor: '#36424e', 
             borderColor: '#333',
             borderWidth: 1
           },
           {
             label: 'Teamwork',
             data: this.reviews.map(r => r.teamwork),
-            backgroundColor: this.reviews.map(r => this.getBarColor(r.teamwork)),
+            backgroundColor: '#d6d6d6',
             borderColor: '#333',
             borderWidth: 1
           }

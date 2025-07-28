@@ -32,7 +32,8 @@ export default createStore({
       localStorage.removeItem('employee');
     },
     updateEmployee(state, updatedEmployee) {
-    state.employee = updatedEmployee;
-  }},
+  state.employee = updatedEmployee;
+  localStorage.setItem('employee', JSON.stringify(updatedEmployee)); 
+}},
   actions: {}
 });

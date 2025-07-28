@@ -37,111 +37,44 @@
 
 <script>
 import PerformanceBar from '@/components/PerformanceBar.vue';
+import axios from 'axios';
 
 export default {
   name: "PerformanceReview",
   components: { PerformanceBar },
   data() {
-    return {
-      showChart: false,
-      reviews: [
-        {
-          id: 1,
-          name: "Sibongile Nkosi",
-          punctuality: 9,
-          taskCompletion: 8,
-          teamwork: 7,
-          comments: "Consistently meets expectations and works well under pressure."
-        },
-        {
-          id: 2,
-          name: "Lungile Moyo",
-          punctuality: 10,
-          taskCompletion: 9,
-          teamwork: 9,
-          comments: "Outstanding contributor with great team spirit."
-        },
-        {
-          id: 3,
-          name: "Thabo Molefe",
-          punctuality: 6,
-          taskCompletion: 7,
-          teamwork: 8,
-          comments: "Needs improvement in time management."
-        },
-        {
-          id: 4,
-          name: "Keshav Naidoo ",
-          punctuality: 8,
-          taskCompletion: 7,
-          teamwork: 6,
-          comments: "Occasionally works in isolation; encouraged to engage more with the team."
-        },
-        {
-          id: 5,
-          name: "Zanele Khumalo",
-          punctuality: 6,
-          taskCompletion: 7,
-          teamwork: 9,
-          comments: "A reliable team player who supports colleagues and contributes positively to group efforts."
-        },
-        {
-          id: 6,
-          name: "Sipho Zulu",
-          punctuality: 5,
-          taskCompletion: 7,
-          teamwork: 7,
-          comments:"Lacks initiative; should work on being more self-driven."
-        },
-        {
-          id: 7,
-          name: "Naledi Moeketsi",
-          punctuality: 5,
-          taskCompletion: 7,
-          teamwork: 6,
-          comments: "Needs to be more proactive in sharing updates and seeking clarification when needed."
-        },
-        {
-          id: 8,
-          name: "Farai Gumbo ",
-          punctuality: 7,
-          taskCompletion: 8,
-          teamwork: 9,
-          comments: "Communicates clearly and effectively with team members and clients."
-        },
-        {
-          id: 9,
-          name: "Karabo Dlamini",
-          punctuality: 8,
-          taskCompletion: 7,
-          teamwork: 8,
-          comments: "Meets expectations but occasionally requires supervision to maintain quality."
-        },
-        {
-          id: 10,
-          name: "Fatima Patel",
-          punctuality: 6,
-          taskCompletion: 7,
-          teamwork: 9,
-          comments: "Consistently delivers high-quality work with attention to detail."
-        }
-      ]
-    }
-  },
-  methods: {
-    getScoreColor(score) {
-      if (score < 6) return 'red';
-      if (score < 7) return 'orange';
-      if (score < 8) return 'gold';
-      return 'green';
-    },
-    getBackgroundColor(score) {
-      if (score < 6) return '#ffcccc';
-      if (score < 7) return '#ffe5b4';
-      if (score < 8) return '#fff9cc';
-      return '#ccffcc';
-    }
+  return {
+    showChart: false,
+    reviews: []
   }
+},
+mounted() {
+  this.fetchPerformanceReviews();
+},
+methods: {
+  fetchPerformanceReviews() {
+    axios.get('http://localhost/hr-management-system/hr-backend/performanceReview.php')
+      .then(response => {
+        this.reviews = response.data;
+      })
+      .catch(error => {
+        console.error("Error fetching reviews:", error);
+      });
+  },
+  getScoreColor(score) {
+    if (score < 6) return 'red';
+    if (score < 7) return 'orange';
+    if (score < 8) return 'gold';
+    return 'green';
+  },
+  getBackgroundColor(score) {
+    if (score < 6) return '#ffcccc';
+    if (score < 7) return '#ffe5b4';
+    if (score < 8) return '#fff9cc';
+    return '#ccffcc';
+  }
+}
+
 }
 </script>
 

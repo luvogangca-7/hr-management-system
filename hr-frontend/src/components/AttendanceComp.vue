@@ -1,10 +1,10 @@
 <template>
   <div>
-    <table class="table table-striped-columns">
+    <table class="table table-striped-columns table-bordered table-sm table-hover">
       <thead class="table-light">
         <tr>
           <th>Employee</th>
-          <th v-for="date in dates" :key="date">{{ date }}</th>
+          <th v-for="date in dates" :key="date">{{ formatDate(date) }}</th>
         </tr>
       </thead>
       <tbody>
@@ -15,7 +15,8 @@
             :key="i"
             :style="{
               backgroundColor: getStatusColor(status),
-              color: getTextColor(status)
+              color: getTextColor(status),
+              textAlign: 'center'
             }"
           >
             {{ status }}
@@ -25,7 +26,6 @@
     </table>
   </div>
 </template>
-
 <script>
 export default {
   name: "AttendanceComp",
@@ -35,17 +35,22 @@ export default {
   },
   methods: {
     getStatusColor(status) {
-      if (status === "Present") return "#d4edda";    // light green
-      if (status === "Absent") return "#f8d7da";     // light red
-      if (status === "Late") return "#fff3cd";       // light yellow/orange
-      return ""; // default
+      if (status === "Present") return "#D4EDDA";    // light green
+      if (status === "Absent") return "#F8D7DA";     // light red
+      if (status === "Late") return "#FFF3CD";       // light yellow/orange
+      return "";
     },
     getTextColor(status) {
       if (status === "Present") return "#155724";
-      if (status === "Absent") return "#721c24";
+      if (status === "Absent") return "#721C24";
       if (status === "Late") return "#856404";
       return "";
+    },
+    formatDate(dateStr) {
+      if (!dateStr) return "";
+      const options = { month: 'short', day: 'numeric' }; // e.g. Jul 28
+      return new Date(dateStr).toLocaleDateString(undefined, options);
     }
   }
-}
+};
 </script>

@@ -188,24 +188,31 @@ export default {
   alert('Profile updated successfully.');
   this.showModal = false;
 
-  // Manually update the Vuex employee state (if needed, use Vuex action/mutation)
-  this.$store.commit('updateEmployee', {
-    ...this.employee,
-    dob: this.form.dob,
-    gender: this.form.gender,
-    marital_status: this.form.marital_status,
-    phone: this.form.phone,
-    address: this.form.address
-  });
+ await this.fetchProfile();
 }else {
       alert('Update failed: ' + response.data.error);
     }
   } catch (error) {
     alert('An error occurred: ' + error.message);
   }
-}
+},
+async fetchProfile() {
+  try {
+    const response = await axios.get('http://localhost/hr-management-system/hr-backend/getEmployeeById.php', {
+      params: { id: this.employee.employee_id }
+    });
+    if (response.data.length > 0) {
+      this.$store.commit('updateEmployee', response.data[0]);
 
+    }
+  } catch (err) {
+    console.error('Fetch failed:', err);
   }
+}
+},
+mounted() {
+  this.fetchProfile();
+}
 };
 
 </script>

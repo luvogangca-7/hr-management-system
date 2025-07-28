@@ -9,7 +9,6 @@
         type="text"
         placeholder="Search employee by name or ID"
         class="search-input"
-        style="margin-bottom: 18px; padding: 8px 12px; width: 75%; border-radius: 5px; border: 1px solid #ccc; font-size: 16px;"
       />
 
       <PayrollComp
@@ -19,6 +18,7 @@
         @generate="generatePayslip"
       />
 
+      <!-- Edit Modal -->
       <div class="modal fade" ref="editModal" tabindex="-1">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -57,6 +57,7 @@
 import { jsPDF } from "jspdf";
 import PayrollComp from "@/components/PayrollComp.vue";
 import * as bootstrap from "bootstrap";
+import axios from "axios";
 
 export default {
   name: "PayrollPage",
@@ -70,38 +71,33 @@ export default {
   },
   computed: {
     filteredPayroll() {
-      if (!this.search) return this.payrollList;
-      const q = this.search.toLowerCase();
+      const q = this.search.trim().toLowerCase();
+      if (!q) return this.payrollList;
       return this.payrollList.filter(emp =>
-        emp.name.toLowerCase().includes(q) ||
-        String(emp.id).includes(q)
+        emp.name.toLowerCase().includes(q) || String(emp.id).includes(q)
       );
     }
   },
   async mounted() {
-    try {
-      const [payrollRes, employeeRes] = await Promise.all([
-        fetch('/hr-data/payroll_data.json'),
-        fetch('/hr-data/employee_info.json')
-      ]);
-      const payrollData = await payrollRes.json();
-      const employeeData = await employeeRes.json();
-
-      this.payrollList = payrollData.payrollData.map(item => {
-        const emp = employeeData.employeeInformation.find(e => e.employeeId === item.employeeId);
-        return {
-          id: item.employeeId,
-          name: emp ? emp.name : 'Unknown',
-          hoursWorked: item.hoursWorked,
-          leaveDeductions: item.leaveDeductions,
-          salary: item.finalSalary
-        };
-      });
-    } catch (error) {
-      console.error('Failed to fetch payroll data:', error);
-    }
+    await this.fetchPayrollData();
   },
   methods: {
+    async fetchPayrollData() {
+      try {
+        const res = await axios.get("http://localhost/hr-management-system/hr-backend/listpayroll.php");
+        if (res.data.success) {
+          this.payrollList = res.data.payrollData.map(item => ({
+            id: item.employee_id,
+            name: item.employee_name,
+            hoursWorked: Number(item.hours_worked),
+            leaveDeductions: Number(item.leave_deductions),
+            salary: Number(item.final_salary)
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch payroll data:", error);
+      }
+    },
     generatePayslip(employee) {
       const doc = new jsPDF();
       doc.setFontSize(18);
@@ -115,55 +111,59 @@ export default {
 
       doc.save(`Payslip_${employee.name.replace(/\s+/g, "_")}.pdf`);
     },
-    deleteRecord(id) {
-      this.payrollList = this.payrollList.filter((record) => record.id !== id);
+    async deleteRecord(id) {
+      try {
+        const res = await axios.post("http://localhost/hr-management-system/hr-backend/deletePayroll.php", {
+          employee_id: id
+        });
+        if (res.data.success) {
+          this.payrollList = this.payrollList.filter(record => record.id !== id);
+        } else {
+          alert(res.data.message || "Failed to delete record");
+        }
+      } catch (error) {
+        console.error("Error deleting payroll record:", error);
+      }
     },
     openEditModal(employee) {
       this.editForm = { ...employee };
       const modal = new bootstrap.Modal(this.$refs.editModal);
       modal.show();
     },
-    saveEdit() {
-      // Example rates, adjust as needed
+    async saveEdit() {
+      // Compute salary
       const hourlyRate = 500;
       const deductionRate = 200;
+      this.editForm.salary = (this.editForm.hoursWorked * hourlyRate) - (this.editForm.leaveDeductions * deductionRate);
 
-      // Calculate salary
-      this.editForm.salary =
-        (this.editForm.hoursWorked * hourlyRate) -
-        (this.editForm.leaveDeductions * deductionRate);
+      try {
+        const res = await axios.post("http://localhost/hr-management-system/hr-backend/updatePayroll.php", {
+          employee_id: this.editForm.id,
+          hours_worked: this.editForm.hoursWorked,
+          leave_deductions: this.editForm.leaveDeductions,
+          final_salary: this.editForm.salary
+        });
 
-      const index = this.payrollList.findIndex((e) => e.id === this.editForm.id);
-      if (index !== -1) {
-        this.payrollList.splice(index, 1, { ...this.editForm });
-      } else {
-        this.payrollList.push({ ...this.editForm });
+        if (res.data.success) {
+          const index = this.payrollList.findIndex(e => e.id === this.editForm.id);
+          if (index !== -1) {
+            this.payrollList.splice(index, 1, { ...this.editForm });
+          }
+          const modal = bootstrap.Modal.getInstance(this.$refs.editModal);
+          modal.hide();
+        } else {
+          alert(res.data.message || "Failed to save changes");
+        }
+      } catch (error) {
+        console.error("Error saving payroll changes:", error);
       }
-      const modal = bootstrap.Modal.getInstance(this.$refs.editModal);
-      modal.hide();
-    },
-    addPayroll() {
-      const newId = this.payrollList.length
-        ? Math.max(...this.payrollList.map(e => e.id)) + 1
-        : 1;
-      this.editForm = {
-        id: newId,
-        name: "",
-        hoursWorked: 0,
-        leaveDeductions: 0,
-        salary: 0
-      };
-      const modal = new bootstrap.Modal(this.$refs.editModal);
-      modal.show();
     }
   }
 };
 </script>
+
 <style>
 .search-input {
-  display: flex;
-  min-width: 200px;
-  max-width: 100%;
   margin-bottom: 18px;
   padding: 8px 12px;
   width: 75%;
@@ -183,7 +183,6 @@ export default {
 @media (max-width: 600px) {
   .search-input {
     width: 100%;
-    min-width: 200px;
   }
 }
 </style>
