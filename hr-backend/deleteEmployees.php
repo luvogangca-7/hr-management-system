@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-include 'hr-backend/hr_database.php';
+include 'hr_database.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 $id = $data['id'];

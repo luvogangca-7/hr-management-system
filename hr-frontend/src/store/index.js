@@ -1,21 +1,38 @@
-import { createStore } from 'vuex'
+import { createStore } from 'vuex';
 
 export default createStore({
   state: {
-    isAdmin: true
+    isAdmin: true,
+    employee: JSON.parse(localStorage.getItem('employee')) || null
   },
   getters: {
-  },
-  mutations: {
-    adminRole(state){
-      state.isAdmin = true
+    isAdmin(state) {
+      return state.isAdmin;
     },
-    staffRole(state){
-      state.isAdmin = false
+    isLoggedIn(state) {
+      return !!state.employee;
+    },
+    employee(state) {
+      return state.employee;
     }
   },
-  actions: {
-  },
-  modules: {
-  }
-})
+  mutations: {
+    adminRole(state) {
+      state.isAdmin = true;
+    },
+    staffRole(state) {
+      state.isAdmin = false;
+    },
+    setEmployee(state, employeeData) {
+      state.employee = employeeData;
+      localStorage.setItem('employee', JSON.stringify(employeeData));
+    },
+    logout(state) {
+      state.employee = null;
+      localStorage.removeItem('employee');
+    },
+    updateEmployee(state, updatedEmployee) {
+    state.employee = updatedEmployee;
+  }},
+  actions: {}
+});

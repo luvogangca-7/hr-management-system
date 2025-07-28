@@ -79,8 +79,8 @@ export default{
   methods: {
     async fetchEmployees() {
       try {
-        const response = await axios.get('http://localhost/hr-system/hr-backend/empMethods/getEmployees.php');
-        console.log('Raw response:', response.data); // Debug log
+        const response = await axios.get('http://localhost/hr-management-system/hr-backend/getEmployees.php');
+
         
         this.employees = response.data.map(item => ({
           id: item.employee_id,           // Make sure this matches the PHP field name
@@ -92,7 +92,7 @@ export default{
           email: item.email
         }));
         
-        console.log('Mapped employees:', this.employees); // Debug log
+        console.log('Mapped employees:', this.employees); 
       } catch (error) {
         console.error('Error fetching employees:', error);
         console.error('Error response:', error.response); // Additional debug info
@@ -102,7 +102,7 @@ export default{
     async addEmployee(newEmployee) {
   try {
     const response = await axios.post(
-      'http://localhost/hr-system/hr-backend/addEmployees.php',
+      'http://localhost/hr-management-system/hr-backend/addEmployees.php',
       newEmployee,
       {
         headers: {
@@ -126,7 +126,7 @@ export default{
 },
     async deleteEmployee(employee) {
       try {
-        const response = await axios.post('http://localhost/hr-system/hr-backend/empMethods/deleteEmployees.php', { id: employee.id });
+        const response = await axios.post('http://localhost/hr-management-system/hr-backend/deleteEmployees.php', { id: employee.id });
         if (response.data.success) {
           // Remove from local array for instant UI update
           this.employees = this.employees.filter(e => e.id !== employee.id);
@@ -147,7 +147,7 @@ export default{
 },
 async updateEmployee(updatedEmployee) {
   try {
-    const response = await axios.post('http://localhost/hr-system/hr-backend/empMethods/editEmployees.php', updatedEmployee);
+    const response = await axios.post('http://localhost/hr-management-system/hr-backend/editEmployees.php', updatedEmployee);
     if (response.data.success) {
       await this.fetchEmployees();
       this.editingEmployee = null;

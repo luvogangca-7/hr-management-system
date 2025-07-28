@@ -42,6 +42,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   name: "Login",
   data() {
@@ -51,31 +53,37 @@ export default {
       showForgotModal: false,
       selectedEmpId: "",
       newPassword: "",
-      employeeIds: ["EMP001", "EMP002", "EMP003"], // Example employee IDs
+      error: ""
     };
   },
   methods: {
     loginAdmin() {
-        // Simple authentication logic: checks hardcoded credentials
-        if(this.username === "admin" && this.password === "1234") {
-            this.error ='',
-            // If credentials are correct, navigate to dashboard
-            this.$router.push('/admin/dashboard')
-        }else{
-            // Otherwise, show error message
-            this.error = 'invalid username or password'
-        }
+      if (this.username === "admin" && this.password === "1234") {
+        this.error = "";
+        this.$router.push("/admin/dashboard");
+      } else {
+        this.error = "Invalid admin username or password.";
+      }
     },
-    loginStaff(){
+    async loginStaff() {
+      try {
+        const response = await axios.post("http://localhost/hr-management-system/hr-backend/employeelogin.php", {
+          username: this.username,
+          password: this.password
+        });
 
-      if(this.username === "user" && this.password === "1234") {
-            this.error ='',
-            // If credentials are correct, navigate to dashboard
-            this.$router.push('/staff/mydashboard')
-        }else{
-            // Otherwise, show error message
-            this.error = 'invalid username or password'
+        if (response.data.success) {
+          // Save employee data for later use
+          this.$store.commit("setEmployee", response.data.employee);
+          this.error = "";
+          this.$router.push("/staff/mydashboard");
+        } else {
+          this.error = response.data.message || "Invalid login.";
         }
+      } catch (err) {
+        console.error("Login error:", err);
+        this.error = "Server error or failed to connect.";
+      }
     },
     forgotPassword() {
       this.showForgotModal = true;
@@ -83,22 +91,17 @@ export default {
       this.newPassword = "";
     },
     submitForgotPassword() {
-      if (!this.selectedEmpId) {
-        alert('Please select your Employee ID.');
+      if (!this.selectedEmpId || !this.newPassword.trim()) {
+        alert("Employee ID and new password are required.");
         return;
       }
-      if (!this.newPassword.trim()) {
-        alert('New password is required.');
-        return;
-      }
-      // Here you would send selectedEmpId and newPassword to your backend for processing
+      // Example: send password reset to backend (not yet implemented)
       this.showForgotModal = false;
-      // Optionally show a success message or toast here
+      alert("Password reset request sent (functionality to be added).");
     }
-  },
+  }
 };
 </script>
-
 <style>
 .footer-bar {
   position: fixed;
@@ -139,10 +142,10 @@ export default {
   padding: 40px;
   border-radius: 15px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-  width: 300px;
+  width: 350px;
   color: #fff;
   /* Animation for login box appearance */
-  animation: appear 2s 0.2s ease forwards;
+  animation: slide-appear 2s 0.2s ease forwards;
   opacity: 0;
 }
 .login-box h2 {
@@ -214,14 +217,24 @@ label {
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
   box-shadow: 0 2px 8px rgba(175, 39, 39, 0.15);
+  opacity: 0;
+  animation: appear 0.5s 1.3s ease forwards;
+  transition: transform 0.2s, background 0.2s;
 }
 
 .roles button:hover,
 .roles button:focus {
-  background: #fff;
-  color: #af2727;
-  border: 2px solid #af2727;
-  transform: translateY(-2px) scale(1.05);
+  transform: translateY(-1px) scale(1.02);
+}
+
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .main-content {
@@ -229,7 +242,7 @@ label {
 }
 
 /* Keyframes for login box animation */
-@keyframes appear {
+@keyframes slide-appear {
   0% {
     opacity: 0.1;
   }

@@ -55,6 +55,7 @@
 <script>
 import '@fortawesome/fontawesome-free/css/all.css'
 import CountUp from '@/components/CountUp.vue';
+import { mapGetters} from 'vuex';
 
 export default {
   components: { CountUp },
@@ -69,7 +70,10 @@ export default {
       performanceScore: 9.1,
       lastFeedback: 'Great teamwork and timely delivery!'
     }
-  }
+  },
+  computed: {
+  ...mapGetters(['employee'])
+ }
 }
 </script>
 

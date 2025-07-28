@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-include '../hr_database.php';  // Go up one directory to find hr_database.php
+include 'hr_database.php';  // Go up one directory to find hr_database.php
 
 // Check if connection exists
 if (!$conn) {
@@ -20,9 +20,14 @@ if (!$conn) {
 }
 
 // Use your original query but add employee_id
-$result = $conn->query("SELECT employees.employee_id, employees.employee_name, employees.position, departments.department_name, employees.salary, employees.employment_history, employees.email 
-FROM employees 
-JOIN departments ON employees.department_id = departments.department_id");
+$result = $conn->query("SELECT 
+  e.*, 
+  d.dob, d.gender, d.marital_status, d.phone, d.address,
+  dp.department_name
+FROM employees e
+LEFT JOIN employee_details d ON e.employee_id = d.employee_id
+LEFT JOIN departments dp ON e.department_id = dp.department_id;
+");
 
 if (!$result) {
     echo json_encode(["error" => "Query failed: " . $conn->error]);
@@ -37,4 +42,3 @@ while ($row = $result->fetch_assoc()) {
 echo json_encode($rows);
 
 $conn->close();
-?>
