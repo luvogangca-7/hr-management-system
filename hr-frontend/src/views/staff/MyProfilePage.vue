@@ -198,7 +198,7 @@ export default {
 },
 async fetchProfile() {
   try {
-    const response = await axios.get('http://localhost/hr-management-system/hr-backend/getEmployeeById.php', {
+    const response = await axios.get('http://localhost/hr-management-system/hr-backend/getEmployeesById.php', {
       params: { id: this.employee.employee_id }
     });
     if (response.data.length > 0) {

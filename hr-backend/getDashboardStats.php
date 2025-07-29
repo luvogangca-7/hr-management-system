@@ -1,50 +1,86 @@
 <?php
-header("Content-Type: application/json");
+header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
+
 include 'hr_database.php';
 
-$response = [];
+// Initialize default response
+$response = [
+    "success" => false,
+    "message" => "Unknown error",
+    "data" => []
+];
 
-// 1. Total employees
-$empResult = $conn->query("SELECT COUNT(*) AS total FROM employees");
-$response['employeeCount'] = $empResult->fetch_assoc()['total'];
+try {
+    // 1. Total Employees
+    $result = $conn->query("SELECT COUNT(*) AS total_employees FROM employees");
+    $totalEmployees = $result->fetch_assoc()['total_employees'];
 
-// 2. Attendance count (e.g. today’s present)
-$attResult = $conn->query("SELECT COUNT(*) AS present FROM attendance WHERE status = 'Present' AND attendance_date = '2025-07-28'");
-$response['attendanceCount'] = $attResult->fetch_assoc()['present'];
+    // 2. Attendance Count (current business week)
+    $result = $conn->query("
+        SELECT COUNT(DISTINCT employee_id) AS attendance_count
+        FROM attendance
+        WHERE YEARWEEK(attendance_date, 1) = YEARWEEK(CURDATE(), 1)
+    ");
+    $attendanceCount = $result->fetch_assoc()['attendance_count'];
 
+    // 3. Average Salary
+    $result = $conn->query("SELECT AVG(salary) AS avg_salary FROM employees");
+    $avgSalary = round((float)$result->fetch_assoc()['avg_salary'], 2);
 
-// 4. Average salary
-$salResult = $conn->query("SELECT AVG(final_salary) AS avgSalary FROM payroll");
-$response['avgSalary'] = round($salResult->fetch_assoc()['avgSalary']);
+    // 4. Department Overview
+    $departments = [];
+    $result = $conn->query("
+        SELECT department_name, COUNT(*) AS count
+        FROM employees
+        GROUP BY department
+    ");
+    while ($row = $result->fetch_assoc()) {
+        $departments[] = [
+            "department" => $row['department'],
+            "count" => (int)$row['count']
+        ];
+    }
 
-// 5. Departments overview
-$deptResult = $conn->query("SELECT department_name, COUNT(*) AS count FROM employees GROUP BY department");
-$departments = [];
-while ($row = $deptResult->fetch_assoc()) {
-    $departments[] = [
-        'name' => $row['department'],
-        'count' => (int)$row['count']
+    // 5. Top Performers (dummy logic for now)
+    $topPerformers = [];
+    $result = $conn->query("
+        SELECT employee_id, name, department
+        FROM employees
+        ORDER BY RAND() LIMIT 3
+    ");
+    while ($row = $result->fetch_assoc()) {
+        $topPerformers[] = [
+            "id" => $row['employee_id'],
+            "name" => $row['name'],
+            "department" => $row['department']
+        ];
+    }
+
+    // 6. Employees on Leave This Week
+    $result = $conn->query("
+        SELECT COUNT(DISTINCT employee_id) AS leave_count
+        FROM leave_requests
+        WHERE YEARWEEK(leave_start, 1) = YEARWEEK(CURDATE(), 1)
+           OR YEARWEEK(leave_end, 1) = YEARWEEK(CURDATE(), 1)
+    ");
+    $leaveCount = $result->fetch_assoc()['leave_count'];
+
+    // Final JSON Response
+    $response['success'] = true;
+    $response['message'] = "Dashboard stats loaded successfully";
+    $response['data'] = [
+        "totalEmployees" => (int)$totalEmployees,
+        "attendanceCount" => (int)$attendanceCount,
+        "avgSalary" => $avgSalary,
+        "leaveCount" => (int)$leaveCount,
+        "departmentOverview" => $departments,
+        "topPerformers" => $topPerformers
     ];
-}
-$response['departments'] = $departments;
 
-// 6. Top 3 performers based on average score
-$perfResult = $conn->query("SELECT e.name, e.position, ROUND((p.punctuality + p.taskCompletion + p.teamwork) / 3, 1) AS score 
-                            FROM performance_reviews p 
-                            JOIN employees e ON p.employeeId = e.employeeId 
-                            ORDER BY score DESC 
-                            LIMIT 3");
-$top = [];
-while ($row = $perfResult->fetch_assoc()) {
-    $top[] = [
-        'name' => $row['name'],
-        'score' => $row['score'],
-        'position' => $row['position']
-    ];
+} catch (Exception $e) {
+    $response['message'] = "Server error: " . $e->getMessage();
 }
-$response['topPerformers'] = $top;
 
 echo json_encode($response);
-$conn->close();
 ?>

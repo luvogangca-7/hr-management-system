@@ -215,7 +215,7 @@ h1 {
 .main-page {
   display: flex;
   flex-direction: column;
-  margin: 10px auto;
+  margin: 10px;
   background: #f9f9f9;
   padding: 32px;
   border-radius: 10px;

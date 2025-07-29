@@ -4,8 +4,31 @@
       <input v-model="employeeData.name" placeholder="Full Name" name='name' required class="form-control mb-2" />
       <input v-model="employeeData.username" placeholder="Username" name='username' required class="form-control mb-2" />
       <input v-model="employeeData.password" placeholder="Password" name='password' type="password" :required="!employee || !employee.id" class="form-control mb-2" />
-      <input v-model="employeeData.position" placeholder="Position" name='position' required class="form-control mb-2" />
-      <input v-model="employeeData.department" placeholder="Department" name='department' required class="form-control mb-2" />
+      <select v-model="employeeData.position" name="position" required class="form-control mb-2">
+          <option disabled value="">Select Position</option>
+          <option>HR Manager</option>
+          <option>Software Engineer</option>
+          <option>UI/UX Designer</option>
+          <option>Quality Analyst</option>
+          <option>Content Strategist</option>
+          <option>Accountant</option>
+          <option>Customer Support Lead</option>
+          <option>DevOps Engineer</option>
+          <option>Sales Representative</option>
+          <option>Marketing Specialist</option>
+      </select>
+      <select v-model="employeeData.department" name="department" required class="form-control mb-2">
+          <option disabled value="">Select Department</option>
+          <option>HR</option>
+          <option>Development</option>
+          <option>IT</option>
+          <option>Finance</option>
+          <option>Marketing</option>
+          <option>Support</option>
+          <option>Quality Assurance</option>
+          <option>Sales</option>
+          <option>Design</option>
+      </select>
       <input v-model.number="employeeData.salary" placeholder="Salary" name='salary' type="number" required class="form-control mb-2" />
       <input v-model="employeeData.history" placeholder="Employment History" name='history' class="form-control mb-2" />
       <input v-model="employeeData.email" placeholder="Email Address" type="email" name="email" required class="form-control mb-2" />

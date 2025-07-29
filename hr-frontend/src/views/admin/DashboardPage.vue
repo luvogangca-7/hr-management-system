@@ -1,6 +1,16 @@
 <template>
   <div class="page-wrapper">
-    <h1>Dashboard</h1>
+    <div class="dashboard-header">
+      <h1>Dashboard</h1>
+      <div class="week">
+        <label for="week-select" style="margin-right: 8px; font-weight: 500;">Week:</label>
+        <select id="week-select" v-model="selectedWeek" @change="fetchDashboardStats">
+          <option v-for="week in weeks" :key="week.value" :value="week.value">
+            {{ week.label }}
+          </option>
+        </select>
+      </div>
+    </div>
     <p>Welcome back Admin, these are the stats so far!</p>
     <div class="main-page">
       <div class="container1">
@@ -51,38 +61,78 @@
 import DepartmentBarChart from '@/components/DepartmentBarChart.vue'
 import CountUp from '@/components/CountUp.vue'
 import '@fortawesome/fontawesome-free/css/all.css'
+import axios from 'axios'
 
 export default {
   components: { DepartmentBarChart, CountUp },
-  data() {
-    return {
-      avgSalary: 63600,
-      employeeCount: 10,
-      attendanceCount: 8,
-      avgHours: 7.5,
-      departments: [
-        { name: 'IT', count: 2 },
-        { name: 'Support', count: 1 },
-        { name: 'QA', count: 1 },
-        { name: 'Development', count: 2 },
-        { name: 'Finance', count: 1 },
-        { name: 'Marketing', count: 1 },
-        { name: 'Design', count: 1 },
-        { name: 'Sales', count: 1 },
-        { name: 'HR', count: 1 }
-      ],
-      clockStatus: [
-        { name: 'Sibongile Nkosi', status: 'Absent' },
-        { name: 'Lungile Moyo', status: 'Present' },
-        { name: 'Thabo Molefe', status: 'Absent' }
-      ],
-      topPerformers: [
-        { name: 'Sibongile Nkosi', score: 9.5, position: 'Developer' },
-        { name: 'Lungile Moyo', score: 9.2, position: 'QA' },
-        { name: 'Thabo Molefe', score: 8.9, position: 'Support' }
-      ]
-    }
+ data() {
+  return {
+    avgSalary: 0,
+    employeeCount: 0,
+    attendanceCount: 0,
+    avgHours: 0,
+    departments: [],
+    topPerformers: [],
+    weeks: [],
+    selectedWeek: ''
   }
+},
+mounted() {
+  this.generateWeeks()
+  this.fetchDashboardStats()
+},
+methods: {
+  async fetchDashboardStats() {
+  try {
+    const res = await axios.get('http://localhost/hr-management-system/hr-backend/getDashboardStats.php', {
+      params: {
+        week: this.selectedWeek
+      }
+    })
+    const data = res.data
+
+    this.avgSalary = data.avgSalary
+    this.employeeCount = data.employeeCount
+    this.attendanceCount = data.attendanceCount
+    this.departments = data.departmentsOverview
+    this.topPerformers = data.topPerformers
+  } catch (err) {
+    console.error("Failed to load dashboard stats:", err)
+  }
+},
+ generateWeeks() {
+  const weeks = []
+  const today = new Date()
+
+  for (let i = 0; i < 6; i++) {
+    const ref = new Date(today)
+    ref.setDate(ref.getDate() - i * 7)
+
+    // Set Monday as start of the business week
+    const day = ref.getDay()
+    const diffToMonday = (day === 0 ? -6 : 1) - day
+    const start = new Date(ref)
+    start.setDate(ref.getDate() + diffToMonday)
+
+    const end = new Date(start)
+    end.setDate(start.getDate() + 4) // Friday
+
+    const label = `${start.toLocaleDateString('en-GB')} - ${end.toLocaleDateString('en-GB')}`
+    const value = `${start.getFullYear()}-W${this.getWeekNumber(start)}`
+
+    weeks.push({ label, value })
+  }
+
+  this.weeks = weeks.reverse()
+  this.selectedWeek = this.weeks[this.weeks.length - 1].value
+},
+getWeekNumber(date) {
+  const onejan = new Date(date.getFullYear(), 0, 1)
+  const millis = date - onejan
+  const days = Math.floor(millis / 86400000)
+  return String(Math.ceil((days + onejan.getDay() + 1) / 7)).padStart(2, '0')
+}
+}
 }
 </script>
 
@@ -178,4 +228,14 @@ export default {
     padding: 10px 10px;
   }
 }
+label {
+  color: #212529;
+}
+.week{
+  justify-self:flex-end ;
+}
+.dashboard-header {
+  vertical-align: top;
+}
+
 </style>

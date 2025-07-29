@@ -74,7 +74,7 @@ export default{
         emp.position.toLowerCase().includes(q) ||
         emp.department.toLowerCase().includes(q)
       );
-    }
+    },
   },
   methods: {
     async fetchEmployees() {
@@ -83,12 +83,12 @@ export default{
 
         
         this.employees = response.data.map(item => ({
-          id: item.employee_id,           // Make sure this matches the PHP field name
-          name: item.employee_name,       // Make sure this matches the PHP field name
+          id: item.employee_id,          
+          name: item.employee_name,      
           position: item.position,
-          department: item.department_name, // Make sure this matches the PHP field name
+          department: item.department_name,
           salary: item.salary,
-          history: item.employment_history, // Make sure this matches the PHP field name
+          history: item.employment_history,
           email: item.email
         }));
         

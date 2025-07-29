@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <h1>Company Attendance</h1>
+    <h1>Attendance</h1>
     <p>The attendance of your employees this month.</p>
 
     <!-- Week Filter -->
@@ -117,7 +117,6 @@ export default {
 <style scoped>
 .page-wrapper {
   padding: 20px;
-  font-family: Arial, sans-serif;
 }
 
 h1 {
