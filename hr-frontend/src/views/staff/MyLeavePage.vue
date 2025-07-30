@@ -62,7 +62,7 @@ export default {
         reason: ''
       },
       leaveRequested: false,
-      employeeId: 3, // Replace with dynamic user ID if available
+      employeeId: '', // Replace with dynamic user ID if available
       employee: {
         leaveBalance: 15,
         leaveRecords: []

@@ -15,18 +15,21 @@ $employee_id = $_GET['employee_id'] ?? null;
 
 $sql = "
     SELECT 
-        l.employee_id,
-        e.employee_name,
-        l.leave_date,
-        l.reason,
-        l.status,
-        l.recorded_at
-    FROM leaverequest l
-    JOIN employees e ON l.employee_id = e.employee_id
+        lr.id,
+        lr.employee_id,
+        e.employee_name AS employee_name,
+        d.department_name,
+        lr.leave_date,
+        lr.end_date,
+        lr.reason,
+        lr.status
+    FROM leave_requests lr
+    JOIN employees e ON lr.employee_id = e.employee_id
+    JOIN departments d ON e.department_id = d.department_id
 ";
 
 if ($employee_id) {
-    $sql .= " WHERE l.employee_id = ?";
+    $sql .= " WHERE lr.employee_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $employee_id);
 } else {

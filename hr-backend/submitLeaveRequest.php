@@ -18,7 +18,7 @@ if (!$employeeId || !$startDate || !$endDate || !$reason) {
     exit;
 }
 
-$sql = "INSERT INTO leave_requests (employee_id, start_date, end_date, reason, status)
+$sql = "INSERT INTO leave_requests (employee_id, leave_date, end_date, reason, status)
         VALUES (?, ?, ?, ?, 'Pending')";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("isss", $employeeId, $startDate, $endDate, $reason);

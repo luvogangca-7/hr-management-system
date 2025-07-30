@@ -40,7 +40,7 @@ if (!in_array($status, $validStatuses)) {
 }
 
 // Check if the leave request exists
-$checkSql = "SELECT * FROM leaverequest WHERE employee_id = ? AND leave_date = ?";
+$checkSql = "SELECT * FROM leave_requests WHERE employee_id = ? AND leave_date = ?";
 $checkStmt = $conn->prepare($checkSql);
 $checkStmt->bind_param("is", $employee_id, $leave_date);
 $checkStmt->execute();
@@ -58,7 +58,7 @@ if ($checkResult->num_rows === 0) {
 $checkStmt->close();
 
 // Update the status of the leave request
-$updateSql = "UPDATE leaverequest SET status = ? WHERE employee_id = ? AND leave_date = ?";
+$updateSql = "UPDATE leave_requests SET status = ? WHERE employee_id = ? AND leave_date = ?";
 $updateStmt = $conn->prepare($updateSql);
 $updateStmt->bind_param("sis", $status, $employee_id, $leave_date);
 
