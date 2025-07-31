@@ -13,9 +13,8 @@
 
       <PayrollComp
         :records="filteredPayroll"
-        @edit="openEditModal"
+        @edit="openEditModal" 
         @delete="deleteRecord"
-        @generate="generatePayslip"
       />
 
       <!-- Edit Modal -->
@@ -24,26 +23,30 @@
           <div class="modal-content">
             <form @submit.prevent="saveEdit">
               <div class="modal-header">
-                <h5 class="modal-title">Edit Payroll</h5>
+                <h5 class="modal-title">Generate PayRoll</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body">
                 <div class="mb-2">
-                  <label class="form-label">Employee Name</label>
+                  <label class="form-label fw-bold" style="color: black;">Employee Name</label>
                   <input v-model="editForm.name" class="form-control" required />
                 </div>
                 <div class="mb-2">
-                  <label class="form-label">Hours Worked</label>
+                  <label class="form-label fw-bold" style="color: black;">Hours Worked</label>
                   <input v-model.number="editForm.hoursWorked" type="number" class="form-control" required />
                 </div>
                 <div class="mb-2">
-                  <label class="form-label">Leave Deductions</label>
+                  <label class="form-label fw-bold" style="color: black;">Leave Deductions</label>
                   <input v-model.number="editForm.leaveDeductions" type="number" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                  <label class="form-label fw-bold" style="color: black;">Tax (10%)</label>
+                  <input :value="computedTax" class="form-control" readonly />
                 </div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary">Generate</button>
               </div>
             </form>
           </div>
@@ -54,7 +57,6 @@
 </template>
 
 <script>
-import { jsPDF } from "jspdf";
 import PayrollComp from "@/components/PayrollComp.vue";
 import * as bootstrap from "bootstrap";
 import axios from "axios";
@@ -76,6 +78,10 @@ export default {
       return this.payrollList.filter(emp =>
         emp.name.toLowerCase().includes(q) || String(emp.id).includes(q)
       );
+    },
+    computedTax() {
+      const gross = (this.editForm.hoursWorked * 500) - (this.editForm.leaveDeductions * 200);
+      return (gross * 0.10).toFixed(2);
     }
   },
   async mounted() {
@@ -98,19 +104,6 @@ export default {
         console.error("Failed to fetch payroll data:", error);
       }
     },
-    generatePayslip(employee) {
-      const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text("Payslip", 105, 20, { align: "center" });
-      doc.setFontSize(12);
-      doc.text(`Employee Name: ${employee.name}`, 20, 40);
-      doc.text(`Employee ID: ${employee.id}`, 20, 50);
-      doc.text(`Hours Worked: ${employee.hoursWorked}`, 20, 60);
-      doc.text(`Leave Deductions: ${employee.leaveDeductions}`, 20, 70);
-      doc.text(`Salary: R${employee.salary}`, 20, 80);
-
-      doc.save(`Payslip_${employee.name.replace(/\s+/g, "_")}.pdf`);
-    },
     async deleteRecord(id) {
       try {
         const res = await axios.post("http://localhost/hr-management-system/hr-backend/deletePayroll.php", {
@@ -131,10 +124,11 @@ export default {
       modal.show();
     },
     async saveEdit() {
-      // Compute salary
       const hourlyRate = 500;
       const deductionRate = 200;
-      this.editForm.salary = (this.editForm.hoursWorked * hourlyRate) - (this.editForm.leaveDeductions * deductionRate);
+      const grossSalary = (this.editForm.hoursWorked * hourlyRate) - (this.editForm.leaveDeductions * deductionRate);
+      const tax = grossSalary * 0.10;
+      this.editForm.salary = grossSalary - tax;
 
       try {
         const res = await axios.post("http://localhost/hr-management-system/hr-backend/updatePayroll.php", {

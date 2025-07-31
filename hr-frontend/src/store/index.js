@@ -24,9 +24,12 @@ export default createStore({
       state.isAdmin = false;
     },
     setEmployee(state, employeeData) {
-      state.employee = employeeData;
-      localStorage.setItem('employee', JSON.stringify(employeeData));
-    },
+  state.employee = {
+    ...employeeData,
+    leaveRecords: employeeData.leaveRecords || [] // Initialize if missing
+  };
+  localStorage.setItem('employee', JSON.stringify(state.employee));
+},
     logout(state) {
       state.employee = null;
       localStorage.removeItem('employee');

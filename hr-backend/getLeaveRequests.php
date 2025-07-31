@@ -1,13 +1,8 @@
 <?php
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET");
 
 include 'hr_database.php';
 
@@ -26,10 +21,11 @@ $sql = "
     FROM leave_requests lr
     JOIN employees e ON lr.employee_id = e.employee_id
     JOIN departments d ON e.department_id = d.department_id
+    WHERE lr.status = 'Pending'
 ";
 
 if ($employee_id) {
-    $sql .= " WHERE lr.employee_id = ?";
+    $sql .= " AND lr.employee_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $employee_id);
 } else {
@@ -51,3 +47,4 @@ echo json_encode([
 
 $stmt->close();
 $conn->close();
+?>

@@ -1,13 +1,27 @@
 <template>
   <div class="page-wrapper">
-    <h1>Attendance</h1>
+    <div class="head">
+      <div>
+        <h1>Attendance</h1>
     <p>The attendance of your employees this month.</p>
+      </div>
+      
 
     <!-- Week Filter -->
     <div class="filter">
       <label for="week">Select Week:</label>
-      <input type="week" id="week" v-model="selectedWeek" @change="filterByWeek" />
+      <select id="week" v-model="selectedWeek" @change="filterByWeek" class="form-select">
+        <option 
+          v-for="option in weekOptions" 
+          :key="option.label" 
+          :value="option.label"
+        >
+          {{ option.label }}
+        </option>
+      </select>
     </div>
+    </div>
+    
 
     <div v-if="error" class="error">{{ error }}</div>
     <div v-else-if="loading">Loading attendance data...</div>
@@ -27,27 +41,28 @@ export default {
     return {
       rawAttendance: [],
       filteredAttendance: [],
-      selectedWeek: '',
+      // Week options with label, start date, and end date (5 days each)
+      weekOptions: [
+        { label: 'Jul 20 to Jul 24', start: '2025-07-20', end: '2025-07-24' },
+        { label: 'Jul 25 to Jul 29', start: '2025-07-25', end: '2025-07-29' },
+        { label: 'Jul 31 to Aug 04', start: '2025-07-31', end: '2025-08-04' }
+      ],
+      selectedWeek: 'Jul 25 to Jul 29',  // Default selected week
       loading: true,
       error: null,
     };
   },
   methods: {
     filterByWeek() {
-      if (!this.selectedWeek) {
+      const selectedOption = this.weekOptions.find(w => w.label === this.selectedWeek);
+      if (!selectedOption) {
+        // If none selected, show all
         this.filteredAttendance = this.rawAttendance;
         return;
       }
 
-      const [year, weekStr] = this.selectedWeek.split('-W');
-      const week = parseInt(weekStr);
-
-      const startDate = this.getDateOfISOWeek(week, parseInt(year));
-      const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 6); // end of the selected week
-
-      const start = startDate.toISOString().split('T')[0];
-      const end = endDate.toISOString().split('T')[0];
+      const start = selectedOption.start;
+      const end = selectedOption.end;
 
       this.filteredAttendance = this.rawAttendance.map(emp => {
         const filteredRecords = emp.attendance.filter(record => {
@@ -59,16 +74,6 @@ export default {
           attendance: filteredRecords
         };
       });
-    },
-    getDateOfISOWeek(week, year) {
-      const simple = new Date(year, 0, 1 + (week - 1) * 7);
-      const dow = simple.getDay();
-      const ISOweekStart = simple;
-      if (dow <= 4)
-        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-      else
-        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-      return ISOweekStart;
     }
   },
   async mounted() {
@@ -78,7 +83,7 @@ export default {
 
       if (data.success) {
         this.rawAttendance = data.attendanceAndLeave;
-        this.filteredAttendance = data.attendanceAndLeave; // default
+        this.filterByWeek(); // Apply filter with default selectedWeek
       } else {
         this.error = data.message || 'Failed to load attendance data';
       }
@@ -113,31 +118,19 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-.page-wrapper {
-  padding: 20px;
+<style>
+.head {
+  display: flex;
+  justify-content: space-between;
 }
-
-h1 {
-  margin-bottom: 0.2em;
+.filter{
+  justify-self: flex-end;
 }
-
-.main-page {
-  margin-top: 1em;
-}
-
-.error {
-  color: red;
-  font-weight: bold;
-}
-
-.filter {
-  margin-bottom: 1em;
-}
-
 .filter label {
-  margin-right: 10px;
-  font-weight: bold;
+  font-size: 1.1rem;
+  color:#333;
+  margin-right: 8px;
 }
+
+
 </style>

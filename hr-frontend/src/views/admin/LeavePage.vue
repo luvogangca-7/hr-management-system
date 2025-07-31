@@ -8,14 +8,15 @@
     <div class="main-page" v-else>
       <!-- History Section -->
       <div v-if="showHistory">
-        <input
+        
+
+        <div class="filters">
+          <input
           v-model="historySearch"
           type="text"
           placeholder="Search history by employee ID or reason"
           class="search-input"
         />
-
-        <div class="filters">
           <button class="butn" @click="setHistoryFilter('Approved')">Approved</button>
           <button class="butn" @click="setHistoryFilter('Denied')">Denied</button>
           <button class="butn" @click="setHistoryFilter('')">All</button>
@@ -55,18 +56,15 @@
 
       <!-- Current Requests Section -->
       <div v-else>
-        <input
+        
+
+        <div class="filters">
+          <input
           v-model="search"
           type="text"
           placeholder="Search by employee ID, name or reason"
           class="search-input"
         />
-
-        <div class="filters">
-          <button class="butn" @click="setStatusFilter('Pending')">Pending</button>
-          <button class="butn" @click="setStatusFilter('Approved')">Approved</button>
-          <button class="butn" @click="setStatusFilter('Denied')">Denied</button>
-          <button class="butn" @click="setStatusFilter('')">All</button>
           <button class="butn" @click="showHistory = true">View History</button>
         </div>
 
@@ -198,47 +196,35 @@ export default {
       }
     },
     async handleStatusChange(req, newStatus) {
-      try {
-        const success = await this.updateLeaveStatus(req.employee_id, req.leave_date, newStatus)
-        if (success) {
-          // Update local data
-          const index = this.allLeaveRequests.findIndex(
-            item => item.id === req.id
-          )
-          if (index !== -1) {
-            this.allLeaveRequests[index].status = newStatus
-            
-            // Add to history
-            await axios.post('http://localhost/hr-management-system/hr-backend/saveToLeaveHistory.php', {
-              employee_id: req.employee_id,
-              employee_name: req.employee_name,
-              leave_date: req.leave_date,
-              end_date: req.end_date,
-              reason: req.reason,
-              status: newStatus
-            })
-            
-            // Refresh history
-            this.fetchLeaveHistory()
-          }
-        }
-      } catch (error) {
-        console.error('Error updating status:', error)
-      }
-    },
+  try {
+    const success = await this.updateLeaveStatus(req.employee_id, req.leave_date, newStatus);
+    if (!success) {
+      alert('Failed to update status');
+    }
+    // The updateLeaveStatus method will now handle refreshing both lists
+  } catch (error) {
+    console.error('Error updating status:', error);
+    alert('Error updating status');
+  }
+},
     async updateLeaveStatus(employee_id, leave_date, status) {
-      try {
-        const res = await axios.post('http://localhost/hr-management-system/hr-backend/updateLeaveStatus.php', {
-          employee_id,
-          leave_date,
-          status
-        })
-        return res.data.success
-      } catch (error) {
-        console.error('Error updating leave status:', error)
-        return false
-      }
-    },
+  try {
+    const res = await axios.post('http://localhost/hr-management-system/hr-backend/updateLeaveStatus.php', {
+      employee_id,
+      leave_date,
+      status
+    })
+    
+    // Refresh both lists after status change
+    this.fetchLeaveRequests()
+    this.fetchLeaveHistory()
+    
+    return res.data.success
+  } catch (error) {
+    console.error('Error updating leave status:', error)
+    return false
+  }
+},
     async removeFromHistory(index, record) {
       const confirmDelete = confirm('Are you sure you want to remove this from history?')
       if (!confirmDelete) return

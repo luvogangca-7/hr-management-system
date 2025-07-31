@@ -1,150 +1,205 @@
 <template>
   <div class="page-wrapper">
     <h1>My Payroll</h1>
-    <p>Welcome back Staff, here is your payroll information.</p>
-    <div class="main-page">
+    <p>Welcome! Here is your payroll summary.</p>
 
-      <!-- Search/filter by employeeId -->
-      <div class="filter">
-        <label for="filterEmployeeId">Filter by Employee ID:</label>
-        <input
-          type="number"
-          id="filterEmployeeId"
-          v-model.number="filterEmployeeId"
-          min="1"
-          placeholder="Enter employee ID"
-        />
+    <div class="main-page">
+      <div v-if="loading">Loading payroll data...</div>
+
+    <p v-if="message" class="message">{{ message }}</p>
+
+    <div v-else>
+      <div v-if="payrollRecord" class="employee-info">
+        <p><strong>Employee ID:</strong> {{ payrollRecord.employee_id }}</p>
+        <p><strong>Employee Name:</strong> {{ payrollRecord.employee_name }}</p>
       </div>
 
-      <!-- Payroll Table -->
-      <section class="payroll-table" v-if="filteredPayroll.length">
-        <h2>Payroll Records</h2>
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Employee ID</th>
-              <th scope="col">Hours Worked</th>
-              <th scope="col">Leave Deductions</th>
-              <th scope="col">Final Salary</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="record in filteredPayroll" :key="record.employee_id">
-              <td>{{ record.employee_id }}</td>
-              <td>{{ record.hours_worked }}</td>
-              <td>{{ record.leave_deductions }}</td>
-              <td>{{ formatCurrency(record.final_salary) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <table v-if="payrollRecord">
+        <thead>
+          <tr>
+            <th>Hours Worked</th>
+            <th>Leave Deductions</th>
+            <th>Final Salary</th>
+            <th>Tax (10%)</th>
+            <th>Rate</th>
+            <th>Net Salary</th>
+            <th>Payslip</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ payrollRecord.hours_worked }}</td>
+            <td>{{ payrollRecord.leave_deductions }}</td>
+            <td>{{ formatCurrency(payrollRecord.final_salary) }}</td>
+            <td>{{ formatCurrency(taxAmount) }}</td>
+            <td>{{ hourlyRate }}</td>
+            <td>{{ formatCurrency(netSalary) }}</td>
+            <td>
+              <button @click="generatePayslip">Download PDF</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-      <section v-else>
-        <p>No payroll records found.</p>
-      </section>
-
-      <!-- Contact HR -->
-      <section class="contact-hr">
-        <h3>Need help with payroll?</h3>
-        <p>If you have any questions or discrepancies, please <a href="mailto:hr@company.com">contact HR</a>.</p>
-      </section>
-
+      <p v-else>No payroll record found.</p>
+    </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default {
+  name: "StaffPayrollPage",
   data() {
     return {
-      filterEmployeeId: null,
-      payrollRecords: [],
+      payrollRecord: null,
+      loading: true,
+      message: "",
+      taxRate: 0.1,
+      hourlyRate: "R533.33/hr",
     };
   },
-  mounted() {
-    axios.get('http://localhost/api/get_payroll.php') // update URL to your PHP API endpoint
-      .then(response => {
-        this.payrollRecords = response.data.payrollData || [];
-      })
-      .catch(error => {
-        console.error('Error loading payroll data:', error);
-        alert('Error loading payroll data');
-      });
-  },
   computed: {
-    filteredPayroll() {
-      if (!this.filterEmployeeId) return this.payrollRecords;
-      return this.payrollRecords.filter(
-        record => record.employee_id === this.filterEmployeeId
-      );
+    userId() {
+      return this.$store.state.employee?.employee_id || null;
+    },
+    taxAmount() {
+      return this.payrollRecord
+        ? this.payrollRecord.final_salary * this.taxRate
+        : 0;
+    },
+    netSalary() {
+      return this.payrollRecord
+        ? this.payrollRecord.final_salary - this.taxAmount
+        : 0;
     },
   },
   methods: {
+    async fetchPayroll() {
+      if (!this.userId) {
+        this.message = "Employee not logged in.";
+        this.loading = false;
+        return;
+      }
+
+      try {
+        const res = await axios.get(
+          `http://localhost/hr-management-system/hr-backend/listpayroll.php?employee_id=${this.userId}`
+        );
+
+        if (res.data.success && res.data.payrollData.length > 0) {
+          this.payrollRecord = res.data.payrollData[0];
+          this.message = "";
+        } else {
+          this.message = "No payroll record found.";
+        }
+      } catch (error) {
+        this.message = "Error fetching payroll: " + error.message;
+      } finally {
+        this.loading = false;
+      }
+    },
     formatCurrency(amount) {
-      return amount.toLocaleString(undefined, {
-        style: 'currency',
-        currency: 'USD',
+      return amount.toLocaleString("en-ZA", {
+        style: "currency",
+        currency: "ZAR",
+        minimumFractionDigits: 2,
       });
     },
+    generatePayslip() {
+      const doc = new jsPDF();
+      const record = this.payrollRecord;
+
+      // Calculate values
+      const taxAmount = record.final_salary * this.taxRate;
+      const netSalary = record.final_salary - taxAmount;
+
+      // Title
+      doc.setFontSize(18);
+      doc.text("Modern Tech Solutions", 70, 20);
+    
+      doc.setFontSize(14);
+      doc.text("Employee Payslip", 85, 30);
+
+      // Employee info on top
+      doc.setFontSize(12);
+      doc.text(`Employee ID: ${record.employee_id}`, 20, 45);
+      doc.text(`Employee Name: ${record.employee_name}`, 20, 55);
+
+      // Table rows as label-value pairs
+      const rows = [
+        ["Hours Worked", record.hours_worked],
+        ["Leave Deductions", record.leave_deductions],
+        ["Rate",this.hourlyRate],
+        ["Final Salary", this.formatCurrency(record.final_salary)],
+        ["Tax (10%)", this.formatCurrency(taxAmount)],
+        ["Net Salary", this.formatCurrency(netSalary)],
+      ];
+
+      autoTable(doc, {
+        startY: 65,
+        body: rows.map(([label, value]) => [label, value]),
+        styles: {
+          halign: "left",
+          valign: "middle",
+          cellPadding: 4,
+          lineWidth: 0.3,
+        },
+        columnStyles: {
+          0: { fontStyle: "bold", textColor: [33, 33, 33] },
+        },
+        theme: "grid",
+        tableWidth: "auto",
+      });
+
+      doc.save(`payslip_${record.employee_id}.pdf`);
+    },
+  },
+  mounted() {
+    this.fetchPayroll();
   },
 };
 </script>
 
 <style scoped>
-.page-wrapper {
-  max-width: 900px;
-  margin: auto;
-  padding: 1rem;
-  font-family: Arial, sans-serif;
-  color: #333;
+.payroll-container {
+  padding: 20px;
 }
 
-h1 {
-  margin-bottom: 0.2rem;
-}
-p {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  color: #555;
+.message {
+  color: #1565c0;
+  margin-top: 10px;
 }
 
-.filter {
-  margin-bottom: 1rem;
-}
-
-.filter label {
-  margin-right: 0.5rem;
+.employee-info p {
+  margin: 0;
   font-weight: 600;
+  font-size: 14px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
-table thead tr {
-  background-color: #e0e0e0;
-}
-
-table tbody tr td,
-table thead tr th {
+th,
+td {
+  padding: 10px;
   border: 1px solid #ccc;
-  padding: 0.5rem 0.7rem;
   text-align: left;
 }
 
-.contact-hr {
-  margin-top: 2rem;
-}
-
-.contact-hr a {
-  color: #007bff;
-  text-decoration: none;
-}
-
-.contact-hr a:hover {
-  text-decoration: underline;
+button {
+  padding: 6px 12px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

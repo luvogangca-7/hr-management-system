@@ -8,7 +8,6 @@
         <th>Leave Deductions</th>
         <th>Salary</th> 
         <th>Action</th>
-        <th>Download</th>
       </tr>
     </thead>
     <tbody>
@@ -17,13 +16,10 @@
         <td>{{ employee.name }}</td>
         <td>{{ employee.hoursWorked }}</td>
         <td>{{ employee.leaveDeductions }}</td>
-        <td>R{{ employee.salary }}</td>
+        <td>R{{ employee.salary.toFixed(2) }}</td>
         <td>
-          <button class="butn mx-2" @click="$emit('edit', employee)">Edit</button>
+          <button class="butn mx-2" @click="$emit('edit', employee)">Generate</button>
           <button class="addBtn mx-2" @click="$emit('delete', employee.id)">Delete</button>
-        </td>
-        <td>
-          <button class="btn btn-secondary" @click="$emit('generate', employee)">Payslip</button>
         </td>
       </tr>
     </tbody>

@@ -225,6 +225,7 @@ label {
 .roles button:hover,
 .roles button:focus {
   transform: translateY(-1px) scale(1.02);
+  box-shadow: 5px 2px 8px rgba(175, 39, 39, 0.45);
 }
 
 

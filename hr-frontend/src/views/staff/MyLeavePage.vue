@@ -28,22 +28,26 @@
       </div>
 
       <h2>My Leave History</h2>
-      <table v-if="employee.leaveRecords.length">
-        <thead>
-          <tr>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(record, index) in employee.leaveRecords" :key="index">
-            <td>{{ record.startDate }}</td>
-            <td>{{ record.endDate }}</td>
-            <td>{{ record.reason }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <table v-if="leaveHistory.length">
+  <thead>
+    <tr>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Reason</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="(record, index) in leaveHistory" :key="index">
+      <td>{{ record.startDate }}</td>
+      <td>{{ record.endDate }}</td>
+      <td>{{ record.reason }}</td>
+      <td :style="{ color: record.status === 'Approved' ? 'green' : 'red' }">
+  {{ record.status || 'Pending' }}
+</td>
+    </tr>
+  </tbody>
+</table>
 
       <p v-else>No leave records found.</p>
     </div>
@@ -61,15 +65,16 @@ export default {
         endDate: '',
         reason: ''
       },
-      leaveRequested: false,
-      employeeId: '', // Replace with dynamic user ID if available
-      employee: {
-        leaveBalance: 15,
-        leaveRecords: []
-      }
+      leaveRequested: false
     };
   },
   computed: {
+    employee() {
+      return this.$store.state.employee;
+    },
+    employeeId() {
+      return this.employee?.employee_id;
+    },
     isFormValid() {
       return (
         this.leaveForm.startDate &&
@@ -86,39 +91,71 @@ export default {
     },
     exceedsBalance() {
       return this.leaveDaysRequested > this.employee.leaveBalance;
-    }
+    },
+    leaveHistory() {
+    return this.$store.state.employee?.leaveRecords?.filter(
+      record => record.employee_id === this.employeeId
+    ) || [];
+  }
   },
   methods: {
-    async submitLeaveRequest() {
-      if (!this.isFormValid || this.exceedsBalance) return;
+async submitLeaveRequest() {
+  if (!this.isFormValid || this.exceedsBalance) return;
 
-      try {
-        const response = await axios.post(
-          'http://localhost/hr-management-system/hr-backend/submitLeaveRequest.php',
-          {
-            employeeId: this.employeeId,
-            startDate: this.leaveForm.startDate,
-            endDate: this.leaveForm.endDate,
-            reason: this.leaveForm.reason
-          }
-        );
+  try {
+    const payload = {
+      employeeId: this.employeeId,
+      startDate: this.leaveForm.startDate,
+      endDate: this.leaveForm.endDate,
+      reason: this.leaveForm.reason
+    };
 
-        if (response.data.success) {
-          this.leaveRequested = true;
-          this.employee.leaveRecords.push({
-            startDate: this.leaveForm.startDate,
-            endDate: this.leaveForm.endDate,
-            reason: this.leaveForm.reason
-          });
-          this.leaveForm = { startDate: '', endDate: '', reason: '' };
-        } else {
-          alert('Failed to submit: ' + response.data.message);
+    const response = await axios.post(
+      'http://localhost/hr-management-system/hr-backend/submitLeaveRequest.php',
+      JSON.stringify(payload),
+      {
+        headers: {
+          'Content-Type': 'application/json'
         }
-      } catch (error) {
-        console.error('Submission error:', error);
-        alert('Server error occurred.');
       }
+    );
+
+    if (response.data.success) {
+      this.leaveRequested = true;
+      
+      // Commit the mutation to update Vuex store
+      this.$store.commit('updateEmployee', {
+        ...this.employee,
+        leaveRecords: [
+          ...(this.employee.leaveRecords || []),
+          {
+            startDate: this.leaveForm.startDate,
+            endDate: this.leaveForm.endDate,
+            reason: this.leaveForm.reason,
+            status: 'Pending'
+          }
+        ]
+      });
+
+      // Reset form
+      this.leaveForm = {
+        startDate: '',
+        endDate: '',
+        reason: ''
+      };
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        this.leaveRequested = false;
+      }, 3000);
+    } else {
+      alert('Failed to submit: ' + response.data.message);
     }
+  } catch (error) {
+    console.error('Submission error:', error);
+    alert('Error: ' + (error.response?.data?.message || error.message));
+  }
+}
   }
 };
 </script>

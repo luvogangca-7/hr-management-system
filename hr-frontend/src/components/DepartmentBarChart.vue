@@ -19,7 +19,7 @@ export default {
   computed: {
     chartData() {
       return {
-        labels: this.departments.map(d => d.name),
+        labels: this.departments.map(d => d.department_name),
         datasets: [
           {
             label: 'Employees',

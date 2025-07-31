@@ -1,16 +1,7 @@
 <template>
   <div class="page-wrapper">
-    <div class="dashboard-header">
+
       <h1>Dashboard</h1>
-      <div class="week">
-        <label for="week-select" style="margin-right: 8px; font-weight: 500;">Week:</label>
-        <select id="week-select" v-model="selectedWeek" @change="fetchDashboardStats">
-          <option v-for="week in weeks" :key="week.value" :value="week.value">
-            {{ week.label }}
-          </option>
-        </select>
-      </div>
-    </div>
     <p>Welcome back Admin, these are the stats so far!</p>
     <div class="main-page">
       <div class="container1">
@@ -70,68 +61,39 @@ export default {
     avgSalary: 0,
     employeeCount: 0,
     attendanceCount: 0,
-    avgHours: 0,
+    avgHours: 8.3,
     departments: [],
     topPerformers: [],
-    weeks: [],
-    selectedWeek: ''
   }
 },
 mounted() {
-  this.generateWeeks()
   this.fetchDashboardStats()
 },
 methods: {
   async fetchDashboardStats() {
   try {
-    const res = await axios.get('http://localhost/hr-management-system/hr-backend/getDashboardStats.php', {
-      params: {
-        week: this.selectedWeek
-      }
-    })
-    const data = res.data
+    const res = await axios.get('http://localhost/hr-management-system/hr-backend/getDashboardStats.php')
+    const result = res.data
 
-    this.avgSalary = data.avgSalary
-    this.employeeCount = data.employeeCount
-    this.attendanceCount = data.attendanceCount
-    this.departments = data.departmentsOverview
-    this.topPerformers = data.topPerformers
+    if (result.success) {
+      const data = result.data
+      this.employeeCount = data.totalEmployees
+      this.attendanceCount = data.attendanceCount
+      this.avgSalary = data.averageSalary
+      this.departments = data.departments
+      this.topPerformers = data.topPerformers.map(tp => ({
+        name: tp.employee_name,
+        position: 'Employee', // Replace with actual position if available
+        score: tp.performance_score
+      }))
+    } else {
+      console.error("Backend returned error:", result.message)
+    }
   } catch (err) {
     console.error("Failed to load dashboard stats:", err)
   }
-},
- generateWeeks() {
-  const weeks = []
-  const today = new Date()
-
-  for (let i = 0; i < 6; i++) {
-    const ref = new Date(today)
-    ref.setDate(ref.getDate() - i * 7)
-
-    // Set Monday as start of the business week
-    const day = ref.getDay()
-    const diffToMonday = (day === 0 ? -6 : 1) - day
-    const start = new Date(ref)
-    start.setDate(ref.getDate() + diffToMonday)
-
-    const end = new Date(start)
-    end.setDate(start.getDate() + 4) // Friday
-
-    const label = `${start.toLocaleDateString('en-GB')} - ${end.toLocaleDateString('en-GB')}`
-    const value = `${start.getFullYear()}-W${this.getWeekNumber(start)}`
-
-    weeks.push({ label, value })
-  }
-
-  this.weeks = weeks.reverse()
-  this.selectedWeek = this.weeks[this.weeks.length - 1].value
-},
-getWeekNumber(date) {
-  const onejan = new Date(date.getFullYear(), 0, 1)
-  const millis = date - onejan
-  const days = Math.floor(millis / 86400000)
-  return String(Math.ceil((days + onejan.getDay() + 1) / 7)).padStart(2, '0')
 }
+
 }
 }
 </script>
