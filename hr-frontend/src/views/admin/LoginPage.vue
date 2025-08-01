@@ -174,6 +174,16 @@ label {
   background: transparent;
 }
 
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: #fff;
+  transition: background-color 9999s ease-in-out 0s;
+  background: rgba(0,0,0,0.2) !important;
+}
+
 .submit {
   width: 100%;
   padding: 10px;
