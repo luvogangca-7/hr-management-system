@@ -16,13 +16,6 @@
         Manager’s Comment: “{{ performance.comments }}”
       </div>
 
-      <div class="feedback-input">
-        <h3>Leave Your Feedback:</h3>
-        <textarea v-model="feedback" rows="4" placeholder="Write your feedback..."></textarea>
-        <br />
-        <button @click="submitFeedback">Submit</button>
-      </div>
-
       <div v-if="submitted" class="thankyou">
         ✅ Thank you for your feedback!
       </div>

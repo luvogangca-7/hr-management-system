@@ -2,8 +2,25 @@
   <div class="form-container" method="POST">
     <form @submit.prevent="submitForm" class="mb-4" >
       <input v-model="employeeData.name" placeholder="Full Name" name='name' required class="form-control mb-2" />
-      <input v-model="employeeData.username" placeholder="Username" name='username' required class="form-control mb-2" />
-      <input v-model="employeeData.password" placeholder="Password" name='password' type="password" :required="!employee || !employee.id" class="form-control mb-2" />
+      <!-- Only show for NEW employees -->
+<div v-if="!employee || !employee.id">
+  <input
+    v-model="employeeData.username"
+    placeholder="Username"
+    name="username"
+    required
+    class="form-control mb-2"
+  />
+  <input
+    v-model="employeeData.password"
+    placeholder="Password"
+    name="password"
+    type="password"
+    required
+    class="form-control mb-2"
+  />
+</div>
+ 
       <select v-model="employeeData.position" name="position" required class="form-control mb-2">
           <option disabled value="">Select Position</option>
           <option>HR Manager</option>
@@ -33,6 +50,7 @@
       <input v-model="employeeData.history" placeholder="Employment History" name='history' class="form-control mb-2" />
       <input v-model="employeeData.email" placeholder="Email Address" type="email" name="email" required class="form-control mb-2" />
       <button type="submit" class="addBtn" id="sub">{{ employee && employee.id ? 'Update Employee' : 'Submit' }}</button>
+      <button type="button" class="cancelBtn" @click="$emit('cancel-edit')">Cancel</button>
     </form>
   </div>
 </template>

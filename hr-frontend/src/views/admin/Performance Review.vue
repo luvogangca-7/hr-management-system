@@ -3,12 +3,15 @@
     <h1>Employee Performance Reviews</h1>
     <p>Check how are your employees performing and identify their abilities.</p>
     <div class="main-page">
-      <button @click="showChart = !showChart" class="tabChart" style="margin-bottom: 1rem;">
+      <div class="buttons">
+        <button @click="showChart = !showChart" class="tabChart" style="margin-bottom: 1rem;">
         {{ showChart ? 'Show Table' : 'Show Chart' }}
       </button>
       <button @click="addPerf = !addPerf" class="tabChart" style="margin-bottom: 1rem;">
         {{ addPerf ? 'Cancel' : 'Add Review' }}
       </button>
+      </div>
+      
 
       <!-- Add Review Form -->
 <form @submit.prevent="submitReview" class="review-form" v-if="addPerf">
@@ -156,6 +159,11 @@ getScoreColor(score) {
 </script>
 
 <style scoped>
+.buttons {
+  width: 200px;
+  display: flex;
+  justify-content: space-between;
+}
 .container {
   margin: auto;
 }

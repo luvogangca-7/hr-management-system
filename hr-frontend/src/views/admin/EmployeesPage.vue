@@ -24,11 +24,13 @@
   <!-- Only show the form if adding OR editing, not both -->
 <div class="main-page" v-if="addEmp || editingEmployee">
   <h3>{{ editingEmployee ? 'Edit employee' : 'Add new employee' }}</h3>
-  <employee-form
-    :employee="editingEmployee"
-    @add-employee="addEmployee"
-    @update-employee="updateEmployee"
-  />
+
+<employee-form
+  :employee="editingEmployee"
+  @add-employee="addEmployee"
+  @update-employee="updateEmployee"
+  @cancel-edit="cancelEdit"
+/>
 
 </div>
 
@@ -128,7 +130,7 @@ export default{
       try {
         const response = await axios.post('http://localhost/hr-management-system/hr-backend/deleteEmployees.php', { id: employee.id });
         if (response.data.success) {
-          // Remove from local array for instant UI update
+
           this.employees = this.employees.filter(e => e.id !== employee.id);
           // Optionally, fetch from backend again to sync
           await this.fetchEmployees();
@@ -147,7 +149,7 @@ export default{
 },
 async updateEmployee(updatedEmployee) {
   try {
-    const response = await axios.post('http://localhost/hr-management-system/hr-backend/editEmployees.php', updatedEmployee);
+    const response = await axios.post('http://localhost/hr-management-system/hr-backend/updateEmployeesPage.php', updatedEmployee);
     if (response.data.success) {
       await this.fetchEmployees();
       this.editingEmployee = null;
@@ -165,6 +167,10 @@ showAdd() {
   if (this.addEmp) {
     this.editingEmployee = null;
   }
+},
+cancelEdit() {
+  this.editingEmployee = null;
+  this.addEmp = false;
 }
 },
 
@@ -225,6 +231,16 @@ td, th {
   box-sizing: border-box;
   transition: width 0.2s;
 }
+
+.cancelBtn {
+  background-color: gray;
+  padding: 8px;
+  margin-left: 10px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+}
+
 
 @media (max-width: 900px) {
   .search-input {
