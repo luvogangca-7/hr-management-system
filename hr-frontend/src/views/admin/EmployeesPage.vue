@@ -97,7 +97,7 @@ export default{
         console.log('Mapped employees:', this.employees); 
       } catch (error) {
         console.error('Error fetching employees:', error);
-        console.error('Error response:', error.response); // Additional debug info
+        console.error('Error response:', error.response); 
       }
     },
     
@@ -115,8 +115,8 @@ export default{
 
     if (response.data.success) {
       console.log('Employee added successfully!', response.data);
-      await this.fetchEmployees(); // Refresh the list
-      this.addEmp = false; // Close the form
+      await this.fetchEmployees(); 
+      this.addEmp = false; 
     } else {
       console.error('Server error:', response.data.error);
       alert(`Error: ${response.data.error || 'Failed to add employee'}`);
@@ -132,7 +132,7 @@ export default{
         if (response.data.success) {
 
           this.employees = this.employees.filter(e => e.id !== employee.id);
-          // Optionally, fetch from backend again to sync
+
           await this.fetchEmployees();
         } else {
           alert('Failed to delete employee: ' + response.data.error);
@@ -143,9 +143,9 @@ export default{
       }
     },
     editEmployee(employee) {
-  // Set the employee to be edited
+
   this.editingEmployee = { ...employee };
-  this.addEmp = false; // Make sure addEmp is false when editing!
+  this.addEmp = false; 
 },
 async updateEmployee(updatedEmployee) {
   try {

@@ -1,29 +1,33 @@
 <template>
-  <div class="attendance-container">
+  <div class="page-wrapper">
     <h1>My Attendance</h1>
+    <p>Monitor your attendance</p>
 
-    <label for="week">Filter by Week:</label>
-    <input type="week" v-model="selectedWeek" @change="filterByWeek" />
+    <div class="main-page">
+      <label for="weekSelect" style="color: #212529;">Select Week:</label>
+      <select id="weekSelect" v-model="selectedWeek" @change="fetchAttendance">
+        <option v-for="week in weeks" :key="week.label" :value="week">
+          {{ week.label }}
+        </option>
+      </select>
 
-    <button @click="checkIn">Check In</button>
-    <p v-if="message">{{ message }}</p>
+      <table v-if="attendance.length">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="record in attendance" :key="record.date">
+            <td>{{ record.date }}</td>
+            <td>{{ record.status }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-    <table v-if="filteredAttendance.length">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="record in filteredAttendance" :key="record.attendance_date">
-          <td>{{ record.attendance_date }}</td>
-          <td>{{ record.status }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p v-else>No attendance records found.</p>
+      <p v-else>No attendance records found for this week.</p>
+    </div>
   </div>
 </template>
 
@@ -33,90 +37,47 @@ import axios from "axios";
 export default {
   data() {
     return {
-      userId: 1, // Replace with actual user ID from login later
+      employeeId: null, // Will be set from local storage or auth
+      weeks: [
+        { label: "Jul 20 – Jul 24", start: "2025-07-20", end: "2025-07-24" },
+        { label: "Jul 25 – Jul 29", start: "2025-07-25", end: "2025-07-29" },
+        { label: "Jul 30 – Aug 03", start: "2025-07-30", end: "2025-08-03" },
+      ],
+      selectedWeek: null,
       attendance: [],
-      filteredAttendance: [],
-      selectedWeek: "",
-      message: "",
     };
+  },
+  mounted() {
+    this.employeeId = localStorage.getItem("employee_id");
+    this.selectedWeek = this.weeks[0];
+    this.fetchAttendance();
   },
   methods: {
     async fetchAttendance() {
+      if (!this.employeeId || !this.selectedWeek) return;
+
       try {
-        const response = await axios.get(
-          "http://localhost:8081/hr_project/hr-system-project-main/HR_Project/api/get-attendance.php"
+        const res = await axios.get(
+          `http://localhost/hr-management-system/hr-backend/getEmployeeAttendance.php`,
+          {
+            params: {
+              id: this.employeeId,
+              start: this.selectedWeek.start,
+              end: this.selectedWeek.end,
+            },
+          }
         );
-        this.attendance = response.data;
-        this.filterByWeek();
+        this.attendance = res.data;
       } catch (error) {
         console.error("Error fetching attendance:", error);
-        this.message = "Failed to load attendance.";
+        this.attendance = [];
       }
     },
-    filterByWeek() {
-      if (!this.selectedWeek) {
-        this.filteredAttendance = this.attendance.filter(
-          (record) => record.employee_id === this.userId
-        );
-        return;
-      }
-
-      const [year, week] = this.selectedWeek.split("-W");
-      const firstDay = this.getDateOfISOWeek(week, year);
-      const lastDay = new Date(firstDay);
-      lastDay.setDate(firstDay.getDate() + 6);
-
-      this.filteredAttendance = this.attendance.filter((record) => {
-        const recordDate = new Date(record.attendance_date);
-        return (
-          record.employee_id === this.userId &&
-          recordDate >= firstDay &&
-          recordDate <= lastDay
-        );
-      });
-    },
-    getDateOfISOWeek(week, year) {
-      const simple = new Date(year, 0, 1 + (week - 1) * 7);
-      const dayOfWeek = simple.getDay();
-      const ISOweekStart = simple;
-      if (dayOfWeek <= 4)
-        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-      else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-      return ISOweekStart;
-    },
-    async checkIn() {
-      const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
-      const payload = {
-        employee_id: this.userId,
-        date: today,
-        status: "Present",
-      };
-
-      try {
-        const response = await axios.post(
-          "http://localhost:8081/hr_project/hr-system-project-main/HR_Project/api/add_attendance.php",
-          payload
-        );
-        this.message = response.data.message || response.data.error || "";
-        if (response.data.success) {
-          this.fetchAttendance(); // Refresh after check-in
-        }
-      } catch (error) {
-        console.error("Check-in error:", error);
-        this.message = "Error during check-in.";
-      }
-    },
-  },
-  mounted() {
-    this.fetchAttendance();
   },
 };
 </script>
 
 <style scoped>
-.attendance-container {
-  padding: 20px;
-}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -128,12 +89,8 @@ td {
   border: 1px solid #ccc;
   text-align: left;
 }
-input[type="week"] {
+select {
   margin-bottom: 10px;
-  padding: 5px;
-}
-button {
-  margin-top: 10px;
-  padding: 8px 12px;
+  padding: 6px;
 }
 </style>

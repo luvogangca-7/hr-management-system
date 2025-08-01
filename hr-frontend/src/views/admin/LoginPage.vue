@@ -17,9 +17,9 @@
         </div>
         <button class="submit" type="submit">Login</button>
       </form>
-      <div class="forgot-password">
+      <!-- <div class="forgot-password">
         <a href="#" @click.prevent="forgotPassword">Forgot password?</a>
-      </div>
+      </div> -->
     </div>
   </div>
   <div v-if="showForgotModal" class="modal-overlay">
