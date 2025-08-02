@@ -73,7 +73,7 @@ This project is designed to manage employee data, attendance, leave, payroll, an
 ### 📦 Prerequisites
 
 - PHP 8.1 or higher  
-- MySQL (via XAMPP, WAMP, or other PHP server environment)  
+- MySQL (via XAMPP)  
 - Browser (Chrome, Edge, etc.)  
 
 ---
@@ -117,7 +117,7 @@ Make sure your development server is running at:
 
 - Open XAMPP
 - Start **Apache** and **MySQL**
-- Visit: `http://localhost/hr-system`
+- Visit: `http://localhost/hr-management-system`
   
 
 ---
