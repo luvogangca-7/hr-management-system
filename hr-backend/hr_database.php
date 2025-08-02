@@ -4,13 +4,12 @@ $dbServerName = 'localhost';
 $dbUsername = 'root';
 $dbPassword = 'Umvubo-7';
 $dbName = 'hr_project';
-$dbPort = 3306;
 
-$conn = mysqli_connect($dbServerName, $dbUsername, $dbPassword, $dbName, $dbPort);
+$conn = mysqli_connect($dbServerName, $dbUsername, $dbPassword, $dbName);
 
 if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());
 }
-// remember on school laptop add the port 3306 on the arguments
+
 
 
